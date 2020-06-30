@@ -7,32 +7,24 @@
         <div class="card">
             <div class="card-body" style="min-height: 250px;">
                 <div class="card-title text-center">
-                    <h3></h3>
+                    <h3>Have you taken HCQS Tablets?<br/> আপনি কি HCQS ট্যাবলেট খেয়েছেন?</h3>
                 </div>
-               
-                <div class="col-sm-10 offset-sm-1 mt-5 text-center" >
-                   
+                <div class="col-sm-10 offset-sm-1 mt-5 text-center" id="yes_no_form" style="display: none;">
                     {{Form::open(['name'=>'hydroxychloroquine','id'=>'hydroxychloroquine','url' => '', 'method' => 'post'])}}
-                     <input type="hidden" id="mobile_no" name="custId" value="{{ $mobile }}">
-                      <input type="hidden" id="code" name="custIdq" value="{{ $code }}">
-                   <div class="form-check-inline" style="font-weight: bold;font-size: 17px;">
+                        <div class="form-check-inline" style="font-weight: bold;font-size: 17px;">
                           <label class="form-check-label" for="radio1">
-                            <input type="radio" class="form-check-input" id="radio1" name="optradio" value="Yes" >Yes
+                            <input type="radio" class="form-check-input" id="radio1" name="optradio" value="Yes" >Yes(হ্যাঁ)
                           </label>
                         </div>
                         <div class="form-check-inline" style="font-weight: bold;font-size: 17px;">
                           <label class="form-check-label" for="radio2">
-                            <input type="radio" class="form-check-input" id="radio2" name="optradio" value="No">No
+                            <input type="radio" class="form-check-input" id="radio2" name="optradio" value="No">No(না)
                           </label>
                         </div>
-
                       <button type="button" class="btn btn-primary" id="sub_but">Submit</button>
                     {!! Form::close() !!}
                 </div>
-
-
-                
-                
+                <div class="col-sm-10 offset-sm-1 mt-5 text-center" id="message" style="display: none;">The provided host name is not valid for this server.It should be <a href="https://www.malda.gov.in" style="color: blue;">https://www.malda.gov.in</a></div>
             </div>
         </div>
     </div>
@@ -41,51 +33,92 @@
 @section('script')
 <script type="text/javascript">
  $(document).ready(function(){
-    
+     var code={{$code}};
+     var token = $("input[name='_token']").val();
+      $.ajax({
+                      type: "post",
+                      url: "check_unique_code",
+                      data:{_token:token,code:code},
+                      dataType: 'json',
+                      success: function (data) {
+
+                        if(data.status == 1){
+
+                            $("#yes_no_form").show();
+                            $("#message").hide();
+
+                        }else{
+                            $("#yes_no_form").hide();
+                            $("#message").show();
+
+                        }
+
+
+
+                      },
+                      error: function (jqXHR, textStatus, errorThrown) {
+                        $(".se-pre-con").fadeOut("slow");
+                        var msg = "";
+                        if (jqXHR.status !== 422 && jqXHR.status !== 400) {
+                            msg += "<strong>" + jqXHR.status + ": " + errorThrown + "</strong>";
+                        } else {
+                            if (jqXHR.responseJSON.hasOwnProperty('exception')) {
+                                msg += "Exception: <strong>" + jqXHR.responseJSON.exception_message + "</strong>";
+                            } else {
+                                msg += "Error(s):<strong><ul>";
+                                $.each(jqXHR.responseJSON['errors'], function (key, value) {
+                                    msg += "<li>" + value + "</li>";
+                                });
+                                msg += "</ul></strong>";
+                            }
+                        }
+                        $.alert({
+                            title: 'Error!!',
+                            type: 'red',
+                            icon: 'fa fa-warning',
+                            content: msg,
+                        });
+                    }
+                  });
+
+
+
     $("#sub_but").click(function(){
-
-    
-    //var sURLVariables = sPageURL.split('&');
-    // for (var i = 0; i < sURLVariables.length; i++)
-    // {
-    //     var sParameterName = sURLVariables[i].split('=');
-    //     if (sParameterName[0] == sParam)
-    //     {
-    //         return decodeURIComponent(sParameterName[1]);
-    //     }
-    // }
-
       var radioValue = $("input[name='optradio']:checked").val();
-      var mobile_no=$("#mobile_no").val();
-      var code=$("#code").val();
+      var code={{$code}};
+      //var code=$("#code").val();
+         //alert(code);
             if(radioValue){
                        var token = $("input[name='_token']").val();
                     $.ajax({
                       type: "post",
                       url: "submit_yes_no",
-                      data:{_token:token,radioValue:radioValue,mobile_no:mobile_no,code:code},
+                      data:{_token:token,radioValue:radioValue,code:code},
                       dataType: 'json',
                       success: function (data) {
 
                         if(data.status == 1){
-                            $.alert({
-                                title: 'Success',
+                           $.confirm({
+                                title: 'SUCCESS!',
                                 type: 'green',
                                 icon: 'fa fa-check',
-                                content: 'Success!!!',
-                          });
+                                content: "Success!!",
+                                buttons: {
+                                    ok: function () {
+                                        location.reload();
+                                    }
+
+                                }
+                            });
                         }else{
 
                             $.alert({
                                 title: 'Unsuccess',
                                 type: 'red',
                                 icon: 'fa fa-warning',
-                                content: 'Mobile Number and Unique code not match',
+                                content: 'Something going wrong',
                           });
                         }
-                       
-
-                               
                       },
                       error: function (jqXHR, textStatus, errorThrown) {
                         $(".se-pre-con").fadeOut("slow");
@@ -119,23 +152,9 @@
                     content: 'Please Check Hydroxychloroquine Yes or No',
              });
             }
-      
-
     });
 
  });
-function redirectPost_newTab(url, data1) {
-                   var $form = $("<form />");
-                   $form.attr("action", url);
-                   $form.attr("method", "post");
-            $form.attr("target", "_blank");
-                   for (var data in data1)
-                       $form.append('<input type="hidden" name="' + data + '" value="' + data1[data] + '" />');
-                   $("body").append($form);
-                   $form.submit();
-               }
-
-
 </script>
 
 @endsection
