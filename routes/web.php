@@ -17,7 +17,6 @@
  //Route::get('/','hydroxychloroquineController@page');
  Route::get('/{code}','hydroxychloroquineController@page');
  Route::post('/submit_yes_no','hydroxychloroquineController@submit_yes_no');
- Route::post('/check_unique_code','hydroxychloroquineController@check_unique_code');
 
 
 
